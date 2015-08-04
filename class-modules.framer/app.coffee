@@ -1,7 +1,11 @@
 # Class basics
 
-myModule = require "myModule"
-@Obj = myModule.Obj
+# Import module and make Obj available
+# myModule = require "myModule"
+# @Obj = myModule.Obj
+
+# Shorthand
+{Obj} = require "ObjClass"
 
 a = new Obj
 b = new Obj

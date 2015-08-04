@@ -2,8 +2,6 @@
 # myModule = require "myModule"
 # Reference the contents by name, like myModule.myFunction() or myModule.myVar
 
-
-
 class exports.Obj
 	_secret = "Shhh"
 	constructor: ->
