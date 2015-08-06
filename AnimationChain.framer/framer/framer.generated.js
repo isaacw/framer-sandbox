@@ -2,9 +2,9 @@
 
 
 if (typeof(DeviceComponent) !== "undefined") {DeviceComponent.Devices["iphone-6-silver"].deviceImageJP2 = false};
-window.Framer.Defaults.DeviceView = {"deviceScale":0.25,"deviceType":"iphone-6-silver","contentScale":1,"orientation":0};
+window.Framer.Defaults.DeviceView = {"deviceScale":0.25,"deviceType":"fullscreen","contentScale":1,"orientation":0};
 
-window.Framer.Defaults.DeviceComponent = {"deviceScale":0.25,"deviceType":"iphone-6-silver","contentScale":1,"orientation":0};
+window.Framer.Defaults.DeviceComponent = {"deviceScale":0.25,"deviceType":"fullscreen","contentScale":1,"orientation":0};
 
 window.FramerStudioInfo = {"deviceImagesUrl":"\/_server\/resources\/DeviceImages","documentTitle":"AnimationChain.framer"};
 
@@ -692,7 +692,7 @@ Runtime = (function(superClass) {
         error.lineNumber = ((ref = result.error.location) != null ? ref.first_line : void 0) + 1;
       }
       bridge.sendError(error);
-      throw new Error("Framer syntax error line " + error.lineNumber + ": " + e.message);
+      throw new Error("Framer syntax error line " + error.lineNumber + ": " + error.message);
     }
     return result;
   };

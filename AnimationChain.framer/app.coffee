@@ -1,29 +1,31 @@
-# Welcome to Framer
+# Animation Chain
+# by Isaac Weinhausen
+# http://isaacw.com
 
-# Learn how to prototype: http://framerjs.com/learn
-# Drop an image on the device, or import a design from Sketch or Photoshop
+
+
 
 # Classes
+# -------------------------------------
 
 class AnimationChain extends Framer.EventEmitter
 	
 	constructor: (o) ->
 		@_animations = []
-		@repeat = false
 		for k, a of o.animations
 			# Ensure the animation is stopped (needed for when passed via the layer.animate method)
 			a.stop()
 			@_animations.push a
-		@repeat = if o.repeat? then o.repeat
+		@repeat = o.repeat ? false
 		@_currentAnimation = @_animations[0]
 		@_chain()
 	
-	_chain: ->
+	_chain: =>
 		# For each animation
 		_.map @_animations, (a, i) =>
 		
 			# Find the next (or first) animation in the array
-			nextAnimation = if i+1 == @_animations.length then @_animations[0] else @_animations[i+1]
+			nextAnimation = if i+1 < @_animations.length then @_animations[i+1] else @_animations[0]
 			
 			# Chain the current animtation to the next animation
 			a.on Events.AnimationEnd, =>
@@ -33,80 +35,91 @@ class AnimationChain extends Framer.EventEmitter
 					nextAnimation.start()
 				@_currentAnimation = nextAnimation
 				
-	start: -> 
+	start: => 
 		@_currentAnimation.start()
 		@emit Events.AnimationStart
-	stop: ->
+	stop: =>
 		@_currentAnimation.stop()
 		@emit Events.AnimationStop
 
 
 
 
-
 # App
-
-square = new Layer
-	width: 250, height: 250
-	backgroundColor: "#fff", borderRadius: 25
-square.centerX()
-
-circle = new Layer
-	width: 200, height: 200, y: 25
-	backgroundColor: "#369", borderRadius: 100
-circle.centerX()
+# -------------------------------------
 
 
+# Set canvas props
 
-fadeOut = new Animation
-	layer: square
-	properties:
-		opacity: 0.2
-	time: 0.5
-
-fadeIn = new Animation
-	layer: square
-	properties: 
-		opacity: 1
-	time: 0.5
-
-moveSquare = new Animation
-	layer: square
-	properties: 
-		y: -> 
-			if square.y > Screen.height
-				0
-			else
-				square.y + 200
-	time: 0.5
-
-moveCircle = new Animation
-	layer: circle
-	properties: 
-		y: -> 
-			if circle.y > Screen.height
-				25
-			else
-				circle.y + 200
-	time: 0.25
-	curve: "spring(160,10,0)"
+bg = new BackgroundLayer 
+	backgroundColor: "#292929"
 
 
+# Render colored squares
 
-magicAnimation = new AnimationChain
+colors = 
+	"purple" : "#877DD7"
+	"blue" : "#28affa"
+	"teal" : "#2DD7AA"
+	"green" : "#7DDD11"
+
+do ->
+	i = 0
+	for key, value of colors
+		@[key] = new Layer
+			width: 50, height: 50
+			x: 50*i
+			backgroundColor: value
+		i++
+
+
+# Animation functions
+
+moveDown = (layer) ->
+	new Animation
+		layer: layer
+		properties: 
+			y: -> 
+				if layer.y > Screen.height
+					0
+				else
+					layer.y + 100
+		time: 0.5
+
+flip = (layer) ->
+	flipAnimation = new Animation
+		layer: layer
+		properties: 
+			rotationZ: 360
+		time: 0.5
+	flipAnimation.on Events.AnimationStop, ->
+		layer.rotationZ = 0
+
+
+# Animation Chains
+
+this.chain1 = new AnimationChain
 	animations:
-		a: fadeOut
-		b: fadeIn
-		c: moveSquare
-		d: moveCircle
+		a: moveDown(purple)
+		b: flip(purple)
+		c: moveDown(blue)
+		d: flip(blue)
+	repeat: true
+
+this.chain2 = new AnimationChain
+	animations:
+		a: moveDown(teal)
+		b: flip(teal)
+		c: moveDown(green)
+		d: flip(green)
 	repeat: true
 
 
 
-magicAnimation.start()
 
+# Execute
+# -------------------------------------
 
+chain1.start()
+chain2.start()
 
-# On a click, go to the next state
-# iconLayer.on Events.Click, ->
-# 	iconLayer.states.next()
