@@ -8,39 +8,56 @@
 # Classes
 # -------------------------------------
 
+# AnimationChain
+# Manages a sequence of Animations
 class AnimationChain extends Framer.EventEmitter
 	
 	constructor: (o) ->
-		@_animations = []
-		for k, a of o.animations
-			# Ensure the animation is stopped (needed for when passed via the layer.animate method)
-			a.stop()
-			@_animations.push a
+		@_animationsArray = []
+		@add(animation) for k, animation of o.animations
 		@repeat = o.repeat ? false
-		@_currentAnimation = @_animations[0]
+		@_currentAnimation = @_animationsArray[0]
 		@_chain()
 	
 	_chain: =>
-		# For each animation
-		_.map @_animations, (a, i) =>
-		
-			# Find the next (or first) animation in the array
-			nextAnimation = if i+1 < @_animations.length then @_animations[i+1] else @_animations[0]
+		_.each @_animationsArray, (animation, i) =>
+			animation.on Events.AnimationEnd, @_animationEndHandler
 			
-			# Chain the current animtation to the next animation
-			a.on Events.AnimationEnd, =>
-				if nextAnimation is @_animations[0] and @repeat is false
-					@emit Events.AnimationEnd
-				else
-					nextAnimation.start()
-				@_currentAnimation = nextAnimation
-				
+	_animationEndHandler: =>
+		if @_isEndofChain() and @repeat is false
+			# End animation chain
+			@emit Events.AnimationEnd
+		else
+			# Restart animation chain
+			@_next().start()
+		@_currentAnimation = @_next()
+
+	
+	add: (animation) =>
+		# Ensure the animation is stopped (needed for when passed via the layer.animate method)
+		animation.stop()
+		# Have the animation track it's own position in the chain
+		animation.index = @_animationsArray.length
+		# Add it to the array	
+		@_animationsArray.push animation
+		
+	_isEndofChain: (animation = @_currentAnimation) =>
+		animation.index is @_animationsArray.length - 1
+		
+	_next: (animation = @_currentAnimation) =>
+		@_animationsArray[animation.index + 1] ? @_animationsArray[0]
+	
 	start: => 
 		@_currentAnimation.start()
 		@emit Events.AnimationStart
+		
 	stop: =>
 		@_currentAnimation.stop()
 		@emit Events.AnimationStop
+		
+
+# AnimationChainLink
+class AnimationChainLink
 
 
 
@@ -92,7 +109,7 @@ flip = (layer) ->
 		properties: 
 			rotationZ: 360
 		time: 0.5
-	flipAnimation.on Events.AnimationStop, ->
+	flipAnimation.on Events.AnimationEnd, ->
 		layer.rotationZ = 0
 
 
@@ -121,5 +138,5 @@ this.chain2 = new AnimationChain
 # -------------------------------------
 
 chain1.start()
-chain2.start()
+# chain2.start()
 
