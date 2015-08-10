@@ -12,16 +12,11 @@
 # Manages a sequence of Animations
 class AnimationChain extends Framer.EventEmitter
 	
-	constructor: (o) ->
+	constructor: (options = {}) ->
 		@_animationsArray = []
-		@add(animation) for k, animation of o.animations
-		@repeat = o.repeat ? false
-		@_currentAnimation = @_animationsArray[0]
-		@_chain()
-	
-	_chain: =>
-		_.each @_animationsArray, (animation, i) =>
-			animation.on Events.AnimationEnd, @_animationEndHandler
+		@_currentAnimation = null
+		@add(animation) for k, animation of options.animations
+		@repeat = options.repeat ? false
 			
 	_animationEndHandler: =>
 		if @_isEndofChain() and @repeat is false
@@ -38,8 +33,13 @@ class AnimationChain extends Framer.EventEmitter
 		animation.stop()
 		# Have the animation track it's own position in the chain
 		animation.index = @_animationsArray.length
+		# Set event handler		
+		animation.on Events.AnimationEnd, @_animationEndHandler
 		# Add it to the array	
 		@_animationsArray.push animation
+		# Set _currentAnimation if this is the first animation to get added
+		if @_animationsArray.length is 1
+			@_currentAnimation = @_animationsArray[0]
 		
 	_isEndofChain: (animation = @_currentAnimation) =>
 		animation.index is @_animationsArray.length - 1
@@ -47,9 +47,10 @@ class AnimationChain extends Framer.EventEmitter
 	_next: (animation = @_currentAnimation) =>
 		@_animationsArray[animation.index + 1] ? @_animationsArray[0]
 	
-	start: => 
-		@_currentAnimation.start()
-		@emit Events.AnimationStart
+	start: =>
+		if @_currentAnimation?
+			@_currentAnimation.start()
+			@emit Events.AnimationStart
 		
 	stop: =>
 		@_currentAnimation.stop()
@@ -116,20 +117,20 @@ flip = (layer) ->
 # Animation Chains
 
 this.chain1 = new AnimationChain
-	animations:
-		a: moveDown(purple)
-		b: flip(purple)
-		c: moveDown(blue)
-		d: flip(blue)
-	repeat: true
+# 	animations:
+# 		a: moveDown(purple)
+# 		b: flip(purple)
+# 		c: moveDown(blue)
+# 		d: flip(blue)
+# 	repeat: true
 
-this.chain2 = new AnimationChain
-	animations:
-		a: moveDown(teal)
-		b: flip(teal)
-		c: moveDown(green)
-		d: flip(green)
-	repeat: true
+# this.chain2 = new AnimationChain
+# 	animations:
+# 		a: moveDown(teal)
+# 		b: flip(teal)
+# 		c: moveDown(green)
+# 		d: flip(green)
+# 	repeat: true
 
 
 
@@ -137,6 +138,12 @@ this.chain2 = new AnimationChain
 # Execute
 # -------------------------------------
 
-chain1.start()
+chain1.add moveDown(purple)
+chain1.add flip(purple)
+chain1.add moveDown(blue)
+chain1.add flip(blue)
+chain1.repeat = true
+
+# chain1.start()
 # chain2.start()
 
