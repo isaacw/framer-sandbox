@@ -7,6 +7,58 @@
 
 {AnimationChain} = require "AnimationChainClass"
 
+# Classes
+# -------------------------------------
+
+# AnimationSet
+# Manages a group of concurrent Animations
+class AnimationSet extends Framer.EventEmitter
+	
+	constructor: (options = {}) ->
+		@_animationsArray = []
+		@add(animation) for k, animation of options.animations
+		@repeat = options.repeat ? false
+			
+	add: (animation) =>
+		# Ensure the animation is stopped (needed when passed via the layer.animate method)
+		animation.stop()
+		# Have the animation track its animating state
+		animation.isAnimating = false
+		# Set event handler		
+		animation.on Events.AnimationEnd, =>
+			@_animationEndHandler(animation)
+		# Add it to the array	
+		@_animationsArray.push animation
+	
+	_animationEndHandler: (animation) =>
+		animation.isAnimating = false
+		if @allAnimationsComplete()
+			if @repeat is false
+				# Emit end event for the set
+				@emit Events.AnimationEnd
+			else
+				# Restart animations
+				@start()
+	
+	allAnimationsComplete: =>
+		_.all(@_animationsArray, "isAnimating", false)
+	
+	start: =>
+		for animation in @_animationsArray
+			animation.start()
+			animation.isAnimating = true
+		@emit Events.AnimationStart
+		
+	stop: =>
+		for animation in @_animationsArray
+			animation.stop()
+			animation.isAnimating = false
+		@emit Events.AnimationStop
+
+
+
+
+
 # App
 # -------------------------------------
 
@@ -68,13 +120,15 @@ this.chain1 = new AnimationChain
 # 		d: flip(blue)
 # 	repeat: true
 
-# this.chain2 = new AnimationChain
-# 	animations:
-# 		a: moveDown(teal)
-# 		b: flip(teal)
-# 		c: moveDown(green)
-# 		d: flip(green)
+this.group1 = new AnimationSet
+	animations:
+		a: moveDown(teal)
+		b: flip(teal)
+		c: moveDown(green)
+		d: flip(green)
 # 	repeat: true
+group1.on Events.AnimationEnd, ->
+	print "group1 ended"
 
 
 
@@ -82,12 +136,12 @@ this.chain1 = new AnimationChain
 # Execute
 # -------------------------------------
 
-chain1.add moveDown(purple)
-chain1.add flip(purple)
-chain1.add moveDown(blue)
-chain1.add flip(blue)
-chain1.repeat = true
+# chain1.add moveDown(purple)
+# chain1.add flip(purple)
+# chain1.add moveDown(blue)
+# chain1.add flip(blue)
+# chain1.repeat = true
 
-chain1.start()
-# chain2.start()
+# chain1.start()
+group1.start()
 
