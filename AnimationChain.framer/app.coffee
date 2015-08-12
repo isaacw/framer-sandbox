@@ -5,57 +5,11 @@
 
 
 
-{AnimationChain} = require "AnimationChainClass"
+{AnimationSequence} = require "AnimationSequence"
+{AnimationSet} = require "AnimationSet"
 
 # Classes
 # -------------------------------------
-
-# AnimationSet
-# Manages a group of concurrent Animations
-class AnimationSet extends Framer.EventEmitter
-	
-	constructor: (options = {}) ->
-		@_animationsArray = []
-		@add(animation) for k, animation of options.animations
-		@repeat = options.repeat ? false
-			
-	add: (animation) =>
-		# Ensure the animation is stopped (needed when passed via the layer.animate method)
-		animation.stop()
-		# Have the animation track its animating state
-		animation.isAnimating = false
-		# Set event handler		
-		animation.on Events.AnimationEnd, =>
-			@_animationEndHandler(animation)
-		# Add it to the array	
-		@_animationsArray.push animation
-	
-	_animationEndHandler: (animation) =>
-		animation.isAnimating = false
-		if @allAnimationsComplete()
-			if @repeat is false
-				# Emit end event for the set
-				@emit Events.AnimationEnd
-			else
-				# Restart animations
-				@start()
-	
-	allAnimationsComplete: =>
-		_.all(@_animationsArray, "isAnimating", false)
-	
-	start: =>
-		for animation in @_animationsArray
-			animation.start()
-			animation.isAnimating = true
-		@emit Events.AnimationStart
-		
-	stop: =>
-		for animation in @_animationsArray
-			animation.stop()
-			animation.isAnimating = false
-		@emit Events.AnimationStop
-
-
 
 
 
@@ -112,23 +66,35 @@ flip = (layer) ->
 
 # Animation Chains
 
-this.chain1 = new AnimationChain
-# 	animations:
-# 		a: moveDown(purple)
-# 		b: flip(purple)
+this.sequence1 = new AnimationSequence
+	animations:
+		a: moveDown(purple)
+		b: flip(purple)
 # 		c: moveDown(blue)
 # 		d: flip(blue)
 # 	repeat: true
 
-this.group1 = new AnimationSet
+# sequence1.add moveDown(purple)
+# sequence1.add flip(purple)
+sequence1.add moveDown(blue)
+sequence1.add flip(blue)
+# sequence1.repeat = true
+
+sequence1.on Events.AnimationEnd, ->
+	print "sequence1 ended"
+	set1.start()
+	
+
+this.set1 = new AnimationSet
 	animations:
 		a: moveDown(teal)
 		b: flip(teal)
 		c: moveDown(green)
 		d: flip(green)
 # 	repeat: true
-group1.on Events.AnimationEnd, ->
-	print "group1 ended"
+
+set1.on Events.AnimationEnd, ->
+	print "set1 ended"
 
 
 
@@ -136,12 +102,6 @@ group1.on Events.AnimationEnd, ->
 # Execute
 # -------------------------------------
 
-# chain1.add moveDown(purple)
-# chain1.add flip(purple)
-# chain1.add moveDown(blue)
-# chain1.add flip(blue)
-# chain1.repeat = true
-
-# chain1.start()
-group1.start()
+sequence1.start()
+# set1.start()
 
