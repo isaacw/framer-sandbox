@@ -22,14 +22,16 @@ scroll = new ScrollComponent
 for i in [0..6]
 	layer = new Layer
 		superLayer: scroll.content
-		backgroundColor: "#fff"
+		backgroundColor: "rgba(255,255,255,0.8)"
 		borderRadius: 4
 		width: 400
 		height: 160
 		x: 10
 		y: 170 * i
+		name: "button#{i}"
 	layer.centerX()
-	layer.on Events.Click, ->
+	layer.on Events.Click, (event, layer) ->
+		console.log event, layer
 		showOffers()
 
 overlay = new Layer
@@ -49,6 +51,7 @@ bottomSheet = new Layer
 
 bottomSheet.draggable.enabled = true
 bottomSheet.draggable.horizontal = false
+bottomSheet.draggable.momentum = false
 bottomSheet.draggable.constraints =
 	x: 0
 	y: Screen.height - bottomSheet.height
@@ -57,32 +60,72 @@ bottomSheet.draggable.constraints =
 
 
 # Events & handlers
+# windowHandler = (event, layer) ->
+# 	console.log event, layer
+# window.addEventListener Events.TouchStart, windowHandler, false
+# window.addEventListener Events.TouchStart, windowHandler, true
+# Events.wrap(window).on Events.TouchStart, windowHandler, true
 
 overlay.on Events.Click, (event, layer) ->
-	console.log event
+# 	console.log event
 	hideOffers()
 
-overlayHandler = ->
-	scroll.scroll = true
-	scroll.scrollHorizontal = false
+overlayEndHandler = ->
 	overlay.visible = false
+	
+windowHandler = ->
+	Events.wrap(document).off Events.TouchEnd, windowHandler
+	if overlay.isAnimating
+		overlay.on Events.AnimationEnd, overlayEndHandler
+	else
+		overlay.visible = false
+
+bottomSheetEndHandler = ->
+	bottomSheet.draggable.enabled = true
+	
+bottomSheetWillMoveHandler = ->
+
+	# Reset back to default updatePosition
+	bottomSheet.draggable.updatePosition = (point) ->
+		return point
+# 	bottomSheet.draggable.enabled = true
+	
+	if bottomSheet.draggable.direction is "down"
+		print bottomSheet.draggable.offset.y
+		
+		# Should we snap?
+		if bottomSheet.draggable.offset.y > 200
+			# Override updatePosition, allow bottom sheet to stay in its current position
+			bottomSheet.draggable.updatePosition = () ->
+				return bottomSheet.point
+			hideOffers()
+# 		print bottomSheet.draggable.constraints.y
+	else
+		if bottomSheet.draggable.offset.y <= 0
+			# Override updatePosition, prevent bottom sheet from moving up
+			bottomSheet.draggable.updatePosition = () ->
+				return bottomSheet.point
+# 			bottomSheet.draggable.enabled = false
+# 			bottomSheet.maxY = Screen.height
+			
+bottomSheet.draggable.on Events.DragWillMove, bottomSheetWillMoveHandler
 
 bottomSheet.on Events.Click, (event, layer) ->
 	# 	Leave empty to simply intercept the click
 
 
 showOffers = ->
-	scroll.scroll = false
 	overlay.visible = true
 	overlay.animate
 		properties:
 			opacity: 1
 		time: 0.95
 		delay: 0.1
-	overlay.off Events.AnimationEnd, overlayHandler
+	overlay.off Events.AnimationEnd, overlayEndHandler
 	bottomSheet.animate
 		properties:
 			maxY: Screen.height
+	bottomSheet.on Events.AnimationEnd, bottomSheetEndHandler
 
 hideOffers = ->
 	overlay.animate
@@ -90,9 +133,12 @@ hideOffers = ->
 			opacity: 0
 		time: 0.95
 		delay: 0.1
-	overlay.on Events.AnimationEnd, overlayHandler
+# 	overlay.on Events.AnimationEnd, overlayEndHandler
 	bottomSheet.animate
 		properties:
 			y: Screen.height
+	bottomSheet.off Events.AnimationEnd, bottomSheetEndHandler
+	bottomSheet.draggable.enabled = false
+	Events.wrap(document).on Events.TouchEnd, windowHandler
 
 # showOffers()
