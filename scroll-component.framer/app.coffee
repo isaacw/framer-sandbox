@@ -72,6 +72,7 @@ overlay.on Events.Click, (event, layer) ->
 
 overlayEndHandler = ->
 	overlay.visible = false
+	overlay.off Events.AnimationEnd, overlayEndHandler
 	
 windowHandler = ->
 	Events.wrap(document).off Events.TouchEnd, windowHandler
@@ -98,6 +99,7 @@ bottomSheetWillMoveHandler = ->
 			# Override updatePosition, allow bottom sheet to stay in its current position
 			bottomSheet.draggable.updatePosition = () ->
 				return bottomSheet.point
+			bottomSheet.draggable.constraints.height = 2000
 			hideOffers()
 # 		print bottomSheet.draggable.constraints.y
 	else
@@ -121,7 +123,7 @@ showOffers = ->
 			opacity: 1
 		time: 0.95
 		delay: 0.1
-	overlay.off Events.AnimationEnd, overlayEndHandler
+	bottomSheet.draggable.constraints.height = bottomSheet.height
 	bottomSheet.animate
 		properties:
 			maxY: Screen.height

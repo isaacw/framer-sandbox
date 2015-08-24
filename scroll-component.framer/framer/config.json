@@ -1,8 +1,10 @@
 {
-  "updateDelay" : 0.3,
-  "deviceScale" : -1,
+  "sharedPrototype" : 0,
   "deviceOrientation" : 0,
   "contentScale" : 1,
-  "sharedPrototype" : 0,
-  "deviceType" : "iphone-5s-silver"
+  "deviceType" : "iphone-5s-silver",
+  "updateDelay" : 0.3,
+  "deviceScale" : "fit",
+  "orientation" : 0,
+  "fullScreen" : false
 }
